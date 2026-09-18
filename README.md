@@ -64,9 +64,10 @@ Idea4AI/
     app/                 # Next.js App Router（页面 + Route Handlers）
     engine/              # Validation Engine（schemas / fold / verdict / pipeline / fixtures）
     store/               # P0 内存存储
-  docs/superpowers/      # Spec & 实现计划
   supabase/              #（计划）迁移脚本
 ```
+
+> `docs/`、`.superpowers/` 仅本地保留，不进入远程仓库。
 
 ## 判决与评分（摘要）
 
