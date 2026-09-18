@@ -1,0 +1,84 @@
+{
+  "idea_id": "mock-idea-kill",
+  "run_id": "mock_kill_000000000000",
+  "clarified": {
+    "who": "indie founders",
+    "pain": "uncertain idea demand",
+    "artifact": "validation report",
+    "why_now": "AI makes prototyping fast",
+    "one_liner": "Validate startup ideas before building",
+    "assumptions": ["founders want evidence"],
+    "low_specificity": false
+  },
+  "audience": {
+    "primary": {
+      "persona": "indie founders",
+      "context": "evaluating a new product idea",
+      "reachability": "high",
+      "notes": "reachable in founder communities"
+    },
+    "non_audience": ["large enterprises"]
+  },
+  "novelty": {
+    "veto": true,
+    "reason": "The concept is too close to an established template.",
+    "template_hit": true,
+    "collision_hints": [],
+    "require_rewrite": true
+  },
+  "scorecard": {
+    "demand_signals": {
+      "demand": {"score": 20, "confidence": 70, "evidence_ids": ["ev_mockkill_001"]},
+      "pain": {"score": 20, "confidence": 70, "evidence_ids": ["ev_mockkill_001"]},
+      "competition": {"score": 20, "confidence": 70, "evidence_ids": ["ev_mockkill_001"]},
+      "funding": {"score": 20, "confidence": 70, "evidence_ids": ["ev_mockkill_001"]},
+      "urgency": {"score": 20, "confidence": 70, "evidence_ids": ["ev_mockkill_001"]},
+      "distribution": {"score": 20, "confidence": 70, "evidence_ids": ["ev_mockkill_001"]}
+    },
+    "signal_notes": {
+      "demand": "Weak demand signal.",
+      "pain": "Pain is not specific.",
+      "competition": "Crowded category.",
+      "funding": "No clear funding signal.",
+      "urgency": "Low urgency.",
+      "distribution": "Distribution is unclear."
+    },
+    "dimensions": {
+      "Pain": 20,
+      "Urgency": 20,
+      "Differentiation": 20,
+      "Buildability": 20,
+      "Distribution": 20,
+      "Willingness": 20,
+      "Competition": 20,
+      "FounderFit": 20
+    },
+    "weights": {
+      "Pain": 0.125,
+      "Urgency": 0.125,
+      "Differentiation": 0.125,
+      "Buildability": 0.125,
+      "Distribution": 0.125,
+      "Willingness": 0.125,
+      "Competition": 0.125,
+      "FounderFit": 0.125
+    },
+    "composite": 20
+  },
+  "verdict": {
+    "verdict": "kill",
+    "rationale": ["Novelty veto applies.", "The idea needs a materially different wedge."],
+    "caps_applied": ["novelty_veto"]
+  },
+  "evidence": [
+    {"id": "ev_mockkill_001", "claim": "Mock evidence for the kill path.", "grade": "L0"}
+  ],
+  "next_actions": ["Rewrite the target user and pain.", "Interview five prospective users.", "Re-run the validator after narrowing the wedge."],
+  "pipeline_version": "p0.1.0",
+  "monetization": null,
+  "pmf": null,
+  "experiments": null,
+  "canvas": null,
+  "pestle": null,
+  "pitch": null
+}
