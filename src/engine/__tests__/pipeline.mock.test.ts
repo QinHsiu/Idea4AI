@@ -5,6 +5,7 @@ import testFixture from "../fixtures/mock_test.json";
 import buildFixture from "../fixtures/mock_build.json";
 import { mockRunId, pickFixture } from "../mock/selectFixture";
 import { runShort } from "../evidence";
+import { runPipeline } from "../pipeline";
 
 describe("MOCK_LLM fixtures", () => {
   it("parses all fixtures and preserves their required verdict bands", () => {
@@ -35,6 +36,13 @@ describe("MOCK_LLM fixtures", () => {
 
   it("selects an explicit override without hashing it", () => {
     expect(pickFixture("anything", "build")).toBe("build");
+  });
+
+  it.each(["kill", "test", "build"] as const)("runs the %s override", async (fixture) => {
+    const report = await runPipeline("x", { mockFixture: fixture, ideaId: "idea_test" });
+    expect(report.idea_id).toBe("idea_test");
+    expect(report.verdict.verdict).toBe(fixture);
+    expect(validationReportSchema.parse(report)).toBeTruthy();
   });
 
   it("selects deterministically and derives hashed mock run ids", () => {
