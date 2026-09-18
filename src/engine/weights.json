@@ -1,0 +1,10 @@
+{
+  "Pain": 0.15,
+  "Urgency": 0.10,
+  "Differentiation": 0.15,
+  "Buildability": 0.15,
+  "Distribution": 0.15,
+  "Willingness": 0.10,
+  "Competition": 0.10,
+  "FounderFit": 0.10
+}
