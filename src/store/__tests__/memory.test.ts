@@ -24,5 +24,13 @@ describe("memory store", () => {
   it("returns undefined for unknown records", () => {
     expect(store.getRun("missing")).toBeUndefined();
     expect(store.getReport("missing")).toBeUndefined();
+    expect(store.getIdea("missing")).toBeUndefined();
+  });
+
+  it("lists ideas newest first", () => {
+    const a = store.createIdea("first");
+    const b = store.createIdea("second");
+    const list = store.listIdeas();
+    expect(list.map((x) => x.id)).toEqual([b.id, a.id]);
   });
 });

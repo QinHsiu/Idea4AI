@@ -59,6 +59,22 @@ export function createMemoryStore(): MemoryStore & {
         ?.report;
     },
 
+    listIdeas() {
+      return [...ideas.values()].sort((a, b) =>
+        a.created_at < b.created_at ? 1 : -1,
+      );
+    },
+
+    getLatestRun(ideaId: string) {
+      return [...runs.values()]
+        .reverse()
+        .find((run) => run.idea_id === ideaId);
+    },
+
+    getIdea(ideaId: string) {
+      return ideas.get(ideaId);
+    },
+
     waitForRun(runId: string) {
       return completions.get(runId) ?? Promise.resolve(runs.get(runId));
     },

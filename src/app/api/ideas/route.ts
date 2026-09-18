@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
 import { memoryStore } from "@/store/memory";
 
+export async function GET() {
+  const ideas = memoryStore.listIdeas().map((idea) => {
+    const run = memoryStore.getLatestRun(idea.id);
+    return {
+      id: idea.id,
+      text: idea.text,
+      created_at: idea.created_at,
+      status: run?.status ?? "draft",
+      verdict: run?.report?.verdict.verdict ?? null,
+      composite: run?.report?.scorecard.composite ?? null,
+    };
+  });
+  return NextResponse.json({ ideas });
+}
+
 export async function POST(request: Request) {
   let body: unknown;
   try {

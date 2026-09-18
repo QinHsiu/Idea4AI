@@ -13,8 +13,8 @@ Vibe coding 场景的 Idea 验证器：输入一句话产品想法，输出结�
 | 确定性 `verdict`（含 cap 降级） | ✅ |
 | `MOCK_LLM` 三套固定 fixture（kill/test/build） | ✅ |
 | Pipeline：`clarify → audience → novelty → scorecard → verdict → report` | ✅ |
-| 内存 Store + REST API | ✅（进行中完善） |
-| Web 校验/报告页 | ⏳ 计划中 |
+| 内存 Store + REST API | ✅ |
+| Web 校验/报告页 | ✅ |
 | Supabase / 真实 LLM / MCP / Skill | ⏳ P1+ |
 
 ## 快速开始

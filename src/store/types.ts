@@ -22,4 +22,7 @@ export interface MemoryStore {
   startValidate(ideaId: string, fixture?: FixtureName): { run_id: string };
   getRun(runId: string): Run | undefined;
   getReport(ideaId: string): ValidationReport | undefined;
+  listIdeas(): Idea[];
+  getLatestRun(ideaId: string): Run | undefined;
+  getIdea(ideaId: string): Idea | undefined;
 }
