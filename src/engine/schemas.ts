@@ -216,7 +216,7 @@ export const validationReportSchema = z
     scorecard: scorecardResultSchema,
     verdict: verdictResultSchema,
     evidence: z.array(evidenceItemSchema),
-    next_actions: z.array(z.string()),
+    next_actions: z.array(z.string()).length(3),
     pipeline_version: z.string(),
     monetization: monetizationLiteSchema.nullable(),
     pmf: pmfLiteSchema.nullable(),
@@ -228,6 +228,7 @@ export const validationReportSchema = z
   .superRefine((data, ctx) => {
     refineL2L3Url(data.evidence, ctx, ["evidence"]);
 
+    // Spec §12.6: evidence_ids ⊆ evidence[].id — report assemble only
     const evidenceIdSet = new Set(data.evidence.map((e) => e.id));
     for (const key of demandSignalKeys) {
       const ids = data.scorecard.demand_signals[key].evidence_ids;
