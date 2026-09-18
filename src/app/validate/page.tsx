@@ -17,33 +17,19 @@ export default function ValidatePage() {
     setError(null);
     setLoading(true);
     try {
-      const createRes = await fetch("/api/ideas", {
+      const res = await fetch("/api/validate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({
+          text,
+          ...(fixture ? { fixture } : {}),
+        }),
       });
-      const created = await createRes.json();
-      if (!createRes.ok) {
-        throw new Error(created.error ?? "创建 idea failed");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? "Validate failed");
       }
-
-      const validateUrl = fixture
-        ? `/api/ideas/${created.id}/validate?fixture=${fixture}`
-        : `/api/ideas/${created.id}/validate`;
-      const validateRes = await fetch(validateUrl, { method: "POST" });
-      const validated = await validateRes.json();
-      if (!validateRes.ok) {
-        throw new Error(validated.error ?? "Validate failed");
-      }
-
-      // Wait briefly for async mock pipeline to finish
-      for (let i = 0; i < 20; i++) {
-        const reportRes = await fetch(`/api/ideas/${created.id}/report`);
-        if (reportRes.ok) break;
-        await new Promise((r) => setTimeout(r, 150));
-      }
-
-      router.push(`/ideas/${created.id}`);
+      router.push(`/ideas/${data.idea_id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setLoading(false);

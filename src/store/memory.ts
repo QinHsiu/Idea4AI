@@ -83,4 +83,12 @@ export function createMemoryStore(): MemoryStore & {
   return store;
 }
 
-export const memoryStore = createMemoryStore();
+const globalForStore = globalThis as typeof globalThis & {
+  __idea4aiMemoryStore?: ReturnType<typeof createMemoryStore>;
+};
+
+/** Survive Next.js route recompiles in dev (otherwise Map resets between /api/ideas and /validate). */
+export const memoryStore =
+  globalForStore.__idea4aiMemoryStore ?? createMemoryStore();
+
+globalForStore.__idea4aiMemoryStore = memoryStore;

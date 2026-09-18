@@ -36,9 +36,20 @@ export async function POST(
   }
 
   try {
+    const { run_id } = memoryStore.startValidate(
+      id,
+      fixtureValue as FixtureName | undefined,
+    );
+    await memoryStore.waitForRun(run_id);
+    const run = memoryStore.getRun(run_id);
     return NextResponse.json(
-      memoryStore.startValidate(id, fixtureValue as FixtureName | undefined),
-      { status: 202 },
+      {
+        run_id,
+        status: run?.status ?? "unknown",
+        report: run?.report ?? null,
+        error: run?.error ?? null,
+      },
+      { status: run?.status === "failed" ? 500 : 200 },
     );
   } catch {
     return NextResponse.json({ error: "Idea not found" }, { status: 404 });
