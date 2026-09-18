@@ -387,7 +387,7 @@ P0 may keep engine inside `apps/web` and extract when MCP lands.
 | Evidence ids | `ev_<run_short>_<seq>`; stable within run |
 | MOCK_LLM | Fixed fixtures; deterministic run_id |
 | Module I/O | §12.0 table; audience←clarify; novelty←clarify+audience |
-| Verdict cap | Differenti ation/Distribution &lt; 30 ⇒ at most pivot |
+| Verdict cap | Differentiation/Distribution &lt; 30 ⇒ at most pivot |
 | P1/P2 keys | Reserved null placeholders on ValidationReport |
 
 ## 12. P0 schemas and acceptance criteria (must pass before “P0 done”)
