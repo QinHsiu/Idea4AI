@@ -1,0 +1,83 @@
+{
+  "idea_id": "mock-idea-test",
+  "run_id": "mock_test_000000000000",
+  "clarified": {
+    "who": "indie founders",
+    "pain": "uncertain idea demand",
+    "artifact": "validation report",
+    "why_now": "AI makes prototyping fast",
+    "one_liner": "Validate startup ideas before building",
+    "assumptions": ["founders want evidence"],
+    "low_specificity": false
+  },
+  "audience": {
+    "primary": {
+      "persona": "indie founders",
+      "context": "evaluating a new product idea",
+      "reachability": "high",
+      "notes": "reachable in founder communities"
+    },
+    "non_audience": ["large enterprises"]
+  },
+  "novelty": {
+    "veto": false,
+    "template_hit": false,
+    "collision_hints": [],
+    "require_rewrite": false
+  },
+  "scorecard": {
+    "demand_signals": {
+      "demand": {"score": 68, "confidence": 70, "evidence_ids": ["ev_mocktest_001"]},
+      "pain": {"score": 68, "confidence": 70, "evidence_ids": ["ev_mocktest_001"]},
+      "competition": {"score": 68, "confidence": 70, "evidence_ids": ["ev_mocktest_001"]},
+      "funding": {"score": 68, "confidence": 70, "evidence_ids": ["ev_mocktest_001"]},
+      "urgency": {"score": 68, "confidence": 70, "evidence_ids": ["ev_mocktest_001"]},
+      "distribution": {"score": 68, "confidence": 70, "evidence_ids": ["ev_mocktest_001"]}
+    },
+    "signal_notes": {
+      "demand": "Promising but unproven demand.",
+      "pain": "Pain is plausible.",
+      "competition": "Competition leaves room for focus.",
+      "funding": "Some adjacent funding signal.",
+      "urgency": "Moderate urgency.",
+      "distribution": "A reachable initial channel exists."
+    },
+    "dimensions": {
+      "Pain": 68,
+      "Urgency": 68,
+      "Differentiation": 68,
+      "Buildability": 68,
+      "Distribution": 68,
+      "Willingness": 68,
+      "Competition": 68,
+      "FounderFit": 68
+    },
+    "weights": {
+      "Pain": 0.125,
+      "Urgency": 0.125,
+      "Differentiation": 0.125,
+      "Buildability": 0.125,
+      "Distribution": 0.125,
+      "Willingness": 0.125,
+      "Competition": 0.125,
+      "FounderFit": 0.125
+    },
+    "composite": 68
+  },
+  "verdict": {
+    "verdict": "test",
+    "rationale": ["The idea has a credible signal.", "Run a focused validation experiment before building."],
+    "caps_applied": []
+  },
+  "evidence": [
+    {"id": "ev_mocktest_001", "claim": "Mock evidence for the test path.", "grade": "L0"}
+  ],
+  "next_actions": ["Interview five target users.", "Launch a small fake-door test.", "Measure the agreed success metric."],
+  "pipeline_version": "p0.1.0",
+  "monetization": null,
+  "pmf": null,
+  "experiments": null,
+  "canvas": null,
+  "pestle": null,
+  "pitch": null
+}
