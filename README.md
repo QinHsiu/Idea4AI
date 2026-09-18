@@ -17,8 +17,6 @@ Vibe coding 场景的 Idea 验证器：输入一句话产品想法，输出结�
 | Web 校验/报告页 | ⏳ 计划中 |
 | Supabase / 真实 LLM / MCP / Skill | ⏳ P1+ |
 
-设计与计划文档在本地 `docs/`、`.superpowers/`（已 gitignore，不上传）。
-
 ## 快速开始
 
 ```bash
@@ -67,15 +65,11 @@ Idea4AI/
   supabase/              #（计划）迁移脚本
 ```
 
-> `docs/`、`.superpowers/` 仅本地保留，不进入远程仓库。
-
 ## 判决与评分（摘要）
 
 - **8 维**：Pain, Urgency, Differentiation, Buildability, Distribution, Willingness, Competition, FounderFit  
 - **判决**：`kill` / `pivot` / `test` / `build`，受 novelty veto、Diff/Dist&lt;30、`build_gate_fail` 等 cap 约束  
 - **证据等级**：L0–L3；L2/L3 必须带 `https?://` URL（Zod 强制）
-
-详情以 Spec §3 / §12 为准。
 
 ## 开发
 
@@ -85,7 +79,7 @@ npm run test:watch
 npm run build     # Next 生产构建
 ```
 
-分支约定：功能开发在 `feat/idea4ai-p0`（或后续 feature 分支），文档与代码均放在本仓库根目录，便于直接 push。
+分支约定：功能开发使用 feature 分支，合并进 `master` 后推送。
 
 ## License
 
