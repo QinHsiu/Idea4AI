@@ -1,8 +1,8 @@
 ﻿# Idea4AI Design Spec
 
 **Date:** 2026-09-18  
-**Revised:** 2026-09-18 (v5: evidence run_short alnum filter, caps enum, evidence_ids refine timing, ExperimentCard Zod max note)  
-**Status:** Spec ready for P0 planning after AC review  
+**Revised:** 2026-09-18 (v6: §3.3 build_gate_fail row; §4 reports reserved keys)  
+**Status:** Approved for P0 implementation planning  
 **Scope:** Vibe coding idea validation only  
 **Approach:** B — Validation Engine + multi-surface (Web / MCP / Skill), phased P0 → P1 → P2  
 **Borrowing meaning:** Capability mapping into engine modules (not 1:1 product clones; not code ports).  
@@ -182,13 +182,15 @@ After fold, normal `scorecard` weights (§3.2) produce `composite`.
 
 | Verdict | Rule |
 |---|---|
-| kill | composite &lt; 40, ** novelty veto |
+| kill | composite &lt; 40, or novelty veto (`novelty_veto` cap) |
 | pivot | 40–59, **or** Differentiation &lt; 30, **or** Distribution &lt; 30 (see unify rule below) |
-| test | 60–74, and neither Differentiation nor Distribution &lt; 30 |
-| build | ≥ 75 **and** Buildability ≥ 50 **and** Pain ≥ 50; if `pmf` status is `weak`, cap at `test` |
+| test | 60–74, and neither Differentiation nor Distribution &lt; 30, and not forced lower by other caps |
+| build | composite ≥ 75 **and** Buildability ≥ 50 **and** Pain ≥ 50; else if composite alone would be `build` but Pain &lt; 50 or Buildability &lt; 50 — **`build_gate_fail` 降级至 `test`**; if P1+ `pmf.status === "weak"` — `pmf_weak_cap` 至多 `test` |
 
 **Unify rule (Differentiation / Distribution):**  
 If Differentiation &lt; 30 **or** Distribution &lt; 30, then `verdict = min(computed, pivot)` — i.e. the result is **at most `pivot`**, even when composite alone would yield `test` or `build`. Record `caps_applied: ["diff_or_dist_lt_30"]`.
+
+**Cap application order (deterministic):** `novelty_veto` (force kill) — `diff_or_dist_lt_30` — `build_gate_fail` — `pmf_weak_cap` (P1+). Each cap only lowers severity (`build` &gt; `test` &gt; `pivot` &gt; `kill`).
 
 ### 3.4 Multi-agent orchestration (optional / later)
 
@@ -230,7 +232,8 @@ When enabled (feature flag `MULTI_AGENT=1`):
 - `monetization_notes` — pricing hypotheses (P1+)  
 - `pmf_assessments` — PMF lite result (P1+)  
 - `evidence` — claim, source, grade, links  
-- `reports` — markdown/JSON snapshot  
+- `reports` — markdown/JSON snapshot of full `ValidationReport` (must include **all** §12.6 reserved keys: `monetization`, `pmf`, `experiments`, `canvas`, `pestle`, `pitch`; P0 values are `null`)  
+- Optional normalized tables for P1+ (`monetization_notes`, `pmf_assessments`, …) remain projections of the same report keys — not a second schema
 
 ### P0 API
 
