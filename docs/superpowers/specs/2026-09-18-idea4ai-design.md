@@ -1,7 +1,7 @@
 ﻿# Idea4AI Design Spec
 
 **Date:** 2026-09-18  
-**Revised:** 2026-09-18 (v3: implementation status, borrow completeness bar, P0 schemas + AC, Fluenta fold lock)  
+**Revised:** 2026-09-18 (v4: schema gaps — low_specificity, Zod refine, evidence ids, MOCK contract, module I/O, verdict unify, P1/P2 field placeholders)  
 **Status:** Spec ready for P0 planning after AC review  
 **Scope:** Vibe coding idea validation only  
 **Approach:** B — Validation Engine + multi-surface (Web / MCP / Skill), phased P0 → P1 → P2  
@@ -182,10 +182,13 @@ After fold, normal `scorecard` weights (§3.2) produce `composite`.
 
 | Verdict | Rule |
 |---|---|
-| kill | composite < 40, or novelty veto |
-| pivot | 40–59, or Differentiation/Distribution critically low (< 30) |
-| test | 60–74 |
+| kill | composite &lt; 40, ** novelty veto |
+| pivot | 40–59, **or** Differentiation &lt; 30, **or** Distribution &lt; 30 (see unify rule below) |
+| test | 60–74, and neither Differentiation nor Distribution &lt; 30 |
 | build | ≥ 75 **and** Buildability ≥ 50 **and** Pain ≥ 50; if `pmf` status is `weak`, cap at `test` |
+
+**Unify rule (Differentiation / Distribution):**  
+If Differentiation &lt; 30 **or** Distribution &lt; 30, then `verdict = min(computed, pivot)` — i.e. the result is **at most `pivot`**, even when composite alone would yield `test` or `build`. Record `caps_applied: ["diff_or_dist_lt_30"]`.
 
 ### 3.4 Multi-agent orchestration (optional / later)
 
@@ -379,25 +382,49 @@ P0 may keep engine inside `apps/web` and extract when MCP lands.
 | Delivery | P0 → P1 → P2 |
 | Stack | Next.js + Supabase + Vercel + pluggable LLM |
 | Code | Not started until P0 plan execution |
+| ClarifiedIdea.low_specificity | Required boolean (v4) |
+| L2+/L3 URL | Zod refine on hints + evidence |
+| Evidence ids | `ev_<run_short>_<seq>`; stable within run |
+| MOCK_LLM | Fixed fixtures; deterministic run_id |
+| Module I/O | §12.0 table; audience←clarify; novelty←clarify+audience |
+| Verdict cap | Differenti ation/Distribution &lt; 30 ⇒ at most pivot |
+| P1/P2 keys | Reserved null placeholders on ValidationReport |
 
 ## 12. P0 schemas and acceptance criteria (must pass before “P0 done”)
 
 Machine-readable Zod (or equivalent) schemas live under `packages/engine/schemas/` once coded. Below is the contract.
 
+### 12.0 Module I/O (explicit data contracts)
+
+Pipeline order matches §3.1. Each step **must** consume the listed inputs; optional inputs marked *(opt)*.
+
+| Step | Module | Consumes | Produces | Notes |
+|---|---|---|---|---|
+| 1 | ingest | raw `idea_text`, `idea_id` | `IdeaInput` | Reject empty/whitespace |
+| 2 | `clarify` | `IdeaInput` | `ClarifiedIdea` | Does not need audience |
+| 3 | `audience` | `IdeaInput` + **`ClarifiedIdea`** | `AudienceProfile` | **Must** use `who`/`pain`/`artifact` from clarify |
+| 4 | `novelty_guard` | `IdeaInput` + **`ClarifiedIdea`** + **`AudienceProfile`** *(opt for scoring hints)* | `NoveltyResult` | Uses `one_liner`, `low_specificity`, `non_audience`; audience optional only if clarify failed soft-path — P0 always passes audience |
+| 5 | `scorecard` | `ClarifiedIdea` + `AudienceProfile` + `NoveltyResult` | `ScorecardResult` | If `novelty.veto`, may still score for diagnostics but verdict forced kill |
+| 6 | `verdict` | `ScorecardResult` + `NoveltyResult` (+ P1 `pmf` *(opt)*) | `VerdictResult` | Pure function of scores + caps; no LLM |
+| 7 | `report` | all prior outputs + `evidence[]` | `ValidationReport` | Assembles only; does not re-score |
+
+**Evidence attachment:** any module may append to a shared `evidence[]` accumulator during the run; `scorecard.demand_signals.*.evidence_ids` MUST reference ids already in that array at report time.
+
 ### 12.1 `clarify` → `ClarifiedIdea`
 
 ```ts
 {
-  who: string;              // primary user
-  pain: string;             // concrete pain
-  artifact: string;         // vibe product shape (CLI/plugin/SaaS/…)
+  who: string;
+  pain: string;
+  artifact: string;
   why_now: string;
   one_liner: string;        // ≤ 160 chars
   assumptions: string[];    // ≤ 5
+  low_specificity: boolean; // true when idea is generic / underspecified
 }
 ```
 
-**AC:** empty raw input rejected; generic “AI app for everyone” still produces structured fields but flags `low_specificity: true` for novelty; snapshot test on 3 fixtures.
+**AC:** empty raw input rejected; generic “AI app for everyone” → structured fields **and** `low_specificity: true`; niche specific idea → `low_specificity: false`; snapshot test on 3 fixtures.
 
 ### 12.2 `audience` lite → `AudienceProfile`
 
@@ -405,11 +432,11 @@ Machine-readable Zod (or equivalent) schemas live under `packages/engine/schemas
 {
   primary: { persona: string; context: string; reachability: "high"|"mid"|"low"; notes: string };
   secondary?: { persona: string; context: string; reachability: "high"|"mid"|"low"; notes: string };
-  non_audience: string[];   // who we are NOT for
+  non_audience: string[];
 }
 ```
 
-**AC:** report JSON always includes `audience`; `reachability` enum enforced; golden fixture for indie B2C tool has `non_audience` non-empty.
+**AC:** always present on report; `reachability` enum enforced; uses clarify.`who` as default persona seed; indie B2C golden has `non_audience` non-empty.
 
 ### 12.3 `novelty_guard` → `NoveltyResult`
 
@@ -417,33 +444,50 @@ Machine-readable Zod (or equivalent) schemas live under `packages/engine/schemas
 {
   veto: boolean;
   reason?: string;
-  template_hit: boolean;    // matched empty “AI-powered X” patterns
-  collision_hints: { source: string; title: string; url?: string; grade: "L0"|"L1"|"L2"|"L3" }[];
+  template_hit: boolean;
+  collision_hints: {
+    source: string;
+    title: string;
+    url?: string;
+    grade: "L0"|"L1"|"L2"|"L3";
+  }[];
   require_rewrite: boolean;
 }
 ```
 
-**AC:** fixtures: (a) “AI-powered todo for everyone” → `template_hit` + `require_rewrite` or `veto`; (b) specific niche tool → no veto; (c) any `grade` ≥ L2 without `url` fails validation.
+**Schema refine (Zod `.superRefine`, not test-only):**  
+For every `collision_hints[i]`, if `grade` is `L2` or `L3`, then `url` MUST be a non-empty string matching `^https?://`. Otherwise schema parse **fails**. Same refine applies to `ValidationReport.evidence[]`.
+
+**AC:** (a) “AI-powered todo for everyone” → `template_hit` and (`require_rewrite` or `veto`); (b) niche tool → no veto; (c) constructing L2 hint without url throws/returns Zod error.
 
 ### 12.4 `scorecard` + fold → `ScorecardResult`
 
 Includes §3.2.1 fields: `demand_signals`, `signal_notes`, `dimensions`, `weights`, `composite`.
 
-**AC:** weights sum 1±1e-6; composite = Σ dim×weight ±0.5; Fluenta fold tests §3.2.1; no keys outside the 8 dims in `dimensions`.
+**AC:** weights sum 1±1e-6; composite = Σ dim×weight ±0.5; Fluenta fold tests §3.2.1; every `evidence_ids` entry exists in report `evidence[].id`.
 
 ### 12.5 `verdict` → `VerdictResult`
 
 ```ts
 {
   verdict: "kill"|"pivot"|"test"|"build";
-  rationale: string[];      // 1–5 bullets
-  caps_applied: string[];   // e.g. "pmf_weak_cap" when P1+
+  rationale: string[];
+  caps_applied: string[];
 }
 ```
 
-**AC:** table-driven tests for thresholds in §3.3; novelty `veto` ⇒ `kill` regardless of composite; Differentiation or Distribution &lt; 30 ⇒ at best `pivot` if composite would say `test`/`build`.
+**AC (aligned with §3.3):** table-driven thresholds; novelty `veto` ⇒ `kill`; **if Differentiation &lt; 30 or Distribution &lt; 30 ⇒ verdict is at most `pivot`** (`caps_applied` includes `diff_or_dist_lt_30`).
 
 ### 12.6 `report` → `ValidationReport`
+
+#### Evidence id rules
+
+| Rule | Spec |
+|---|---|
+| Format | `ev_<run_short>_<seq>` where `run_short` = first 8 chars of `run_id` (hex/uuid without dashes ok), `seq` = zero-padded 3-digit monotonic int starting `001` |
+| Example | `ev_a1b2c3d4_001` |
+| Stability | Within a single `run_id`, ids are assigned in append order and **never reused**; regenerating the same mock fixture yields the **same** ids |
+| References | `demand_signals.*.evidence_ids` ⊆ `evidence[].id`; dangling refs fail report schema refine |
 
 ```ts
 {
@@ -454,18 +498,86 @@ Includes §3.2.1 fields: `demand_signals`, `signal_notes`, `dimensions`, `weight
   novelty: NoveltyResult;
   scorecard: ScorecardResult;
   verdict: VerdictResult;
-  evidence: { id: string; claim: string; grade: "L0"|"L1"|"L2"|"L3"; url?: string }[];
+  evidence: {
+    id: string;             // matches ^ev_[a-z0-9]+_\d{3}$
+    claim: string;
+    grade: "L0"|"L1"|"L2"|"L3";
+    url?: string;           // required if grade ∈ {L2,L3} (Zod refine)
+  }[];
   next_actions: string[];   // exactly 3 in P0
-  pipeline_version: string;
+  pipeline_version: string; // e.g. "p0.1.0"
+
+  // --- Reserved placeholders (null in P0; names locked for P1/P2 migrations) ---
+  monetization: MonetizationLite | null;  // P1
+  pmf: PmfLite | null;                    // P1
+  experiments: ExperimentCard[] | null;   // P2
+  canvas: CanvasLite | null;              // P2
+  pestle: PestleLite | null;              // P2
+  pitch: string | null;                   // P2 optional
 }
 ```
 
-**AC:** contract test `validate → report` returns this shape; Web `/ideas/[id]` renders all P0 sections; `MOCK_LLM=1` path produces valid report for golden kill/test/build ideas.
+#### Reserved P1/P2 field shapes (placeholders — implement later, names frozen)
+
+```ts
+// P1
+type MonetizationLite = {
+  model: "subscription"|"usage"|"one_time"|"freemium"|"marketplace"|"other";
+  price_hypothesis: string;
+  revenue_notes: string;
+  willingness_link: string;  // ties to Willingness dim rationale
+};
+
+type PmfLite = {
+  status: "strong"|"mixed"|"weak"|"unknown";
+  signals: string[];
+  gaps: string[];
+  caps_verdict: boolean;     // if true and status=weak → verdict capped to test
+};
+
+// P2
+type ExperimentCard = {
+  name: string;
+  type: "mom_test"|"fake_door"|"concierge"|"rat"|"other";
+  duration_days: number;     // ≤ 14 for default RAT pack
+  budget_usd: number;        // ≤ 100 for default pack
+  success_metric: string;
+};
+
+type CanvasLite = {
+  lean: Record<string, string>;  // problem, solution, uv, channels, …
+  jtbd: { job: string; situation: string; outcome: string };
+  swot: { strengths: string[]; weaknesses: string[]; opportunities: string[]; threats: string[] };
+};
+
+type PestleLite = {
+  political: string;
+  economic: string;
+  social: string;
+  technological: string;
+  legal: string;
+  environmental: string;
+};
+```
+
+#### `MOCK_LLM=1` output contract
+
+When `MOCK_LLM=1` (or `true`):
+
+1. **No** external LLM calls.  
+2. Engine selects one of **three fixed fixtures** by hashing normalized `idea_text` into buckets, **or** by explicit `?fixture=kill|test|build` / `X-Mock-Fixture` header in API tests.  
+3. Fixtures live at `packages/engine/fixtures/mock_{kill,test,build}.json` and **are** valid `ValidationReport` objects (including reserved keys as `null`).  
+4. `run_id` in mock mode is deterministic: `mock_<fixture>_<sha256(idea_text)[0:12]>`.  
+5. Evidence ids follow §12.6 rules with that `run_id`.  
+6. Golden tests assert **byte-stable** JSON for the three named fixtures (ignore wall-clock timestamps if any; P0 reports have **no** timestamp fields required).
+
+**AC:** contract test `validate → report` shape; Web renders P0 sections; mock path yields stable golden verdicts kill/test/build; Zod rejects L2+ evidence without url; reserved keys present and `null` in P0.
 
 ### 12.7 P0 done checklist
 
-- [ ] Schemas + unit/contract tests green  
+- [ ] Schemas + unit/contract tests green (incl. Zod refines, evidence id refs, mock fixtures)  
 - [ ] Web path: create idea → validate → view report  
 - [ ] Three golden ideas match expected verdict class  
 - [ ] README documents `MOCK_LLM` and env vars  
-- [ ] No MCP/Skill required for P0 done
+- [ ] No MCP/Skill required for P0 done  
+- [ ] DB/JSON columns reserved for `monetization`, `pmf`, `experiments`, `canvas`, `pestle`, `pitch`
