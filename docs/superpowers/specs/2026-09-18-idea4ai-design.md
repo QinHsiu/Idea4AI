@@ -1,11 +1,27 @@
 ﻿# Idea4AI Design Spec
 
 **Date:** 2026-09-18  
-**Revised:** 2026-09-18 (gap closure: full s.txt matrix, dimension weights, PMF/monetization/audience/PESTLE)  
-**Status:** Pending user re-review after gap closure  
+**Revised:** 2026-09-18 (v3: implementation status, borrow completeness bar, P0 schemas + AC, Fluenta fold lock)  
+**Status:** Spec ready for P0 planning after AC review  
 **Scope:** Vibe coding idea validation only  
 **Approach:** B — Validation Engine + multi-surface (Web / MCP / Skill), phased P0 → P1 → P2  
-**Borrowing meaning:** Capability mapping into engine modules (not 1:1 product clones; not code ports).
+**Borrowing meaning:** Capability mapping into engine modules (not 1:1 product clones; not code ports).  
+**Implementation status:** **Code not started.** P0 modules (`clarify`, `audience` lite, `novelty_guard`, `scorecard`, `verdict`, `report`) exist only as this design until the P0 implementation plan is executed.
+
+### Borrow completeness bar
+
+| Level | Meaning | Idea4AI target |
+|---|---|---|
+| Design mapping | Capability appears in §7 with status | Done in this spec |
+| Schema + AC | Inputs/outputs + tests locked | Required before coding each absorb (see §12) |
+| Code shipped | Module passes AC tests | Not started |
+| Feature parity | Clone every upstream feature | **Not a goal** |
+
+`partial` / `defer` rows are **intentional**, not unfinished bookkeeping:
+
+- **partial** = vibe-relevant subset only (e.g. experiment library ⊂ 44; Lean Canvas in P2; PMF Kit → `pmf` + decision, not full Spec-Kit).  
+- **defer** = out of default path (multi-agent parallel + Opus synth, Impact Compass pure stats).  
+- Success = every `absorb`/`partial` row has schema + AC when its phase starts; not that every upstream repo is reimplemented.
 
 ## 1. Goals and non-goals
 
@@ -104,10 +120,63 @@ Weights sum to **1.00**. Composite = Σ (dim_score × weight) with each dim_scor
 | “Evidence quality” as a score dim | **Not a dim**; cross-cutting via evidence grades L0–L3 |
 | Team size / hiring | Folded into **FounderFit** (solo bias) |
 | Capital intensity | Folded into **Buildability** + **Willingness** |
-| Fluenta-style “funding signal” | Folded into **Willingness** / **Competition** notes; not separate dim |
+| Fluenta-style “funding signal” | See **§3.2.1** fold table; not a 9th dim |
 | Trigvale extra dims beyond mapping | Must map to nearest of 8 or go to report narrative—**no 9th dim in P0–P2** |
 
 **Config:** weights live in `engine/scorecard/weights.json` (overridable per env); golden tests lock default weights.
+
+#### 3.2.1 Fluenta 6 demand signals → 8 dims (locked fold)
+
+Fluenta-style signals are **first-class intermediate fields**, then folded into dims + `signal_notes`. They never appear as extra scorecard columns in the UI.
+
+| Fluenta signal (`id`) | Meaning (vibe) | Folds into dim(s) | Also written to |
+|---|---|---|---|
+| `demand` | Evidence people want this class of tool | **Pain** (0.6) + **Willingness** (0.4) | `signal_notes.demand` |
+| `pain` | Intensity/specificity of the pain | **Pain** (1.0) | `signal_notes.pain` |
+| `competition` | Crowding / substitutes | **Competition** (1.0) | `signal_notes.competition` |
+| `funding` | Capital/hype around space (weak for indie) | **Willingness** (0.5) + **Competition** (0.5) | `signal_notes.funding` |
+| `urgency` | Why-now / time pressure | **Urgency** (1.0) | `signal_notes.urgency` |
+| `distribution` *(mapped from Fluenta “reach/渠道” if present; else derived)* | Reachability of buyers | **Distribution** (1.0) | `signal_notes.distribution` |
+
+**Fold math (per dim):**  
+`dim_raw = clamp(0,100, weighted average of contributing signal scores)`.  
+If a signal is `null` (unknown), omit from that dim’s average; do not invent.  
+After fold, normal `scorecard` weights (§3.2) produce `composite`.
+
+**Required output fields** (on every P0+ run that completes scorecard):
+
+```json
+{
+  "demand_signals": {
+    "demand": { "score": 0, "confidence": 0, "evidence_ids": [] },
+    "pain": { "score": 0, "confidence": 0, "evidence_ids": [] },
+    "competition": { "score": 0, "confidence": 0, "evidence_ids": [] },
+    "funding": { "score": 0, "confidence": 0, "evidence_ids": [] },
+    "urgency": { "score": 0, "confidence": 0, "evidence_ids": [] },
+    "distribution": { "score": 0, "confidence": 0, "evidence_ids": [] }
+  },
+  "signal_notes": {
+    "demand": "string",
+    "pain": "string",
+    "competition": "string",
+    "funding": "string",
+    "urgency": "string",
+    "distribution": "string"
+  },
+  "dimensions": { "Pain": 0, "Urgency": 0, "Differentiation": 0, "Buildability": 0, "Distribution": 0, "Willingness": 0, "Competition": 0, "FounderFit": 0 },
+  "weights": { "...": 0.15 },
+  "composite": 0
+}
+```
+
+`score`/`confidence` ∈ 0–100; `evidence_ids` reference `evidence[]`. Missing signal → `score: null`, `confidence: 0`, note explains unknown.
+
+**AC / tests (lock):**
+
+1. Fixture with all six signals set → each dim receiving folds matches hand-computed weighted average (±0.5).  
+2. Fixture with `funding: null` → Willingness/Competition use only non-null contributors; no NaN.  
+3. Schema reject if UI/API exposes a 9th dimension key.  
+4. Golden: high `pain`+`demand`, low `competition` → Pain/Willingness high, Competition low (directional assert).
 
 ### 3.3 Default verdict thresholds
 
@@ -273,10 +342,10 @@ MCP + Skill + API keys; `quick_check`; real-time/deeper retrieval; `monetization
 
 ## 9. Testing (P0 minimum)
 
-- Unit: verdict thresholds, novelty templates, evidence grades, **weight sum = 1**, dimension map fixtures  
-- Contract: validate → run → report JSON schema (includes audience section)  
+- Unit + contract per **§12** (schemas, Fluenta fold, verdict table, novelty fixtures)  
 - Golden ideas: expected kill / test / build each  
-- Web E2E smoke with `MOCK_LLM=1`
+- Web E2E smoke with `MOCK_LLM=1`  
+- P0 not “done” until §12.7 checklist is checked
 
 ## 10. Repository layout (target)
 
@@ -299,11 +368,104 @@ P0 may keep engine inside `apps/web` and extract when MCP lands.
 | Domain | Vibe coding only |
 | Architecture | Shared engine + multi-surface; **serial default** |
 | Scoring | Canonical 8 dims + weights; map 14/10/6 into them |
+| Fluenta 6 signals | Intermediate `demand_signals` + fold math §3.2.1; not extra UI dims |
 | PMF | Independent `pmf` module (P1), not only a decision blurb |
 | Monetization | Lite module (P1); heavy TAM still non-goal |
 | Audience | Report section via `audience` (P0 lite) |
 | PESTLE | Lite in P2 via `pestle` |
 | Multi-agent / pure stats | Deferred optional |
 | External tool recommender / naming / idea gen / CLI-primary | Non-goals |
+| Partial/defer | Intentional vibe subset / later — not parity debt |
 | Delivery | P0 → P1 → P2 |
 | Stack | Next.js + Supabase + Vercel + pluggable LLM |
+| Code | Not started until P0 plan execution |
+
+## 12. P0 schemas and acceptance criteria (must pass before “P0 done”)
+
+Machine-readable Zod (or equivalent) schemas live under `packages/engine/schemas/` once coded. Below is the contract.
+
+### 12.1 `clarify` → `ClarifiedIdea`
+
+```ts
+{
+  who: string;              // primary user
+  pain: string;             // concrete pain
+  artifact: string;         // vibe product shape (CLI/plugin/SaaS/…)
+  why_now: string;
+  one_liner: string;        // ≤ 160 chars
+  assumptions: string[];    // ≤ 5
+}
+```
+
+**AC:** empty raw input rejected; generic “AI app for everyone” still produces structured fields but flags `low_specificity: true` for novelty; snapshot test on 3 fixtures.
+
+### 12.2 `audience` lite → `AudienceProfile`
+
+```ts
+{
+  primary: { persona: string; context: string; reachability: "high"|"mid"|"low"; notes: string };
+  secondary?: { persona: string; context: string; reachability: "high"|"mid"|"low"; notes: string };
+  non_audience: string[];   // who we are NOT for
+}
+```
+
+**AC:** report JSON always includes `audience`; `reachability` enum enforced; golden fixture for indie B2C tool has `non_audience` non-empty.
+
+### 12.3 `novelty_guard` → `NoveltyResult`
+
+```ts
+{
+  veto: boolean;
+  reason?: string;
+  template_hit: boolean;    // matched empty “AI-powered X” patterns
+  collision_hints: { source: string; title: string; url?: string; grade: "L0"|"L1"|"L2"|"L3" }[];
+  require_rewrite: boolean;
+}
+```
+
+**AC:** fixtures: (a) “AI-powered todo for everyone” → `template_hit` + `require_rewrite` or `veto`; (b) specific niche tool → no veto; (c) any `grade` ≥ L2 without `url` fails validation.
+
+### 12.4 `scorecard` + fold → `ScorecardResult`
+
+Includes §3.2.1 fields: `demand_signals`, `signal_notes`, `dimensions`, `weights`, `composite`.
+
+**AC:** weights sum 1±1e-6; composite = Σ dim×weight ±0.5; Fluenta fold tests §3.2.1; no keys outside the 8 dims in `dimensions`.
+
+### 12.5 `verdict` → `VerdictResult`
+
+```ts
+{
+  verdict: "kill"|"pivot"|"test"|"build";
+  rationale: string[];      // 1–5 bullets
+  caps_applied: string[];   // e.g. "pmf_weak_cap" when P1+
+}
+```
+
+**AC:** table-driven tests for thresholds in §3.3; novelty `veto` ⇒ `kill` regardless of composite; Differentiation or Distribution &lt; 30 ⇒ at best `pivot` if composite would say `test`/`build`.
+
+### 12.6 `report` → `ValidationReport`
+
+```ts
+{
+  idea_id: string;
+  run_id: string;
+  clarified: ClarifiedIdea;
+  audience: AudienceProfile;
+  novelty: NoveltyResult;
+  scorecard: ScorecardResult;
+  verdict: VerdictResult;
+  evidence: { id: string; claim: string; grade: "L0"|"L1"|"L2"|"L3"; url?: string }[];
+  next_actions: string[];   // exactly 3 in P0
+  pipeline_version: string;
+}
+```
+
+**AC:** contract test `validate → report` returns this shape; Web `/ideas/[id]` renders all P0 sections; `MOCK_LLM=1` path produces valid report for golden kill/test/build ideas.
+
+### 12.7 P0 done checklist
+
+- [ ] Schemas + unit/contract tests green  
+- [ ] Web path: create idea → validate → view report  
+- [ ] Three golden ideas match expected verdict class  
+- [ ] README documents `MOCK_LLM` and env vars  
+- [ ] No MCP/Skill required for P0 done
