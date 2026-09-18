@@ -1,7 +1,7 @@
 ﻿# Idea4AI Design Spec
 
 **Date:** 2026-09-18  
-**Revised:** 2026-09-18 (v4: schema gaps — low_specificity, Zod refine, evidence ids, MOCK contract, module I/O, verdict unify, P1/P2 field placeholders)  
+**Revised:** 2026-09-18 (v5: evidence run_short alnum filter, caps enum, evidence_ids refine timing, ExperimentCard Zod max note)  
 **Status:** Spec ready for P0 planning after AC review  
 **Scope:** Vibe coding idea validation only  
 **Approach:** B — Validation Engine + multi-surface (Web / MCP / Skill), phased P0 → P1 → P2  
@@ -384,8 +384,11 @@ P0 may keep engine inside `apps/web` and extract when MCP lands.
 | Code | Not started until P0 plan execution |
 | ClarifiedIdea.low_specificity | Required boolean (v4) |
 | L2+/L3 URL | Zod refine on hints + evidence |
-| Evidence ids | `ev_<run_short>_<seq>`; stable within run |
-| MOCK_LLM | Fixed fixtures; deterministic run_id |
+| Evidence ids | `ev_<run_short>_<seq>`; `run_short` = alnum(run_id)[:8]; regex `^ev_[a-z0-9]{8}_\d{3}$` |
+| MOCK_LLM | Fixed fixtures; readable `mock_<fixture>_<hash12>` run_id |
+| caps_applied | Closed enum: novelty_veto, diff_or_dist_lt_30, pmf_weak_cap, build_gate_fail |
+| evidence_ids refine | Report assemble only — not scorecard unit tests |
+| ExperimentCard | P2 Zod `.max(14)` / `.max(100)` when module ships |
 | Module I/O | §12.0 table; audience←clarify; novelty←clarify+audience |
 | Verdict cap | Differentiation/Distribution &lt; 30 ⇒ at most pivot |
 | P1/P2 keys | Reserved null placeholders on ValidationReport |
@@ -408,7 +411,9 @@ Pipeline order matches §3.1. Each step **must** consume the listed inputs; opti
 | 6 | `verdict` | `ScorecardResult` + `NoveltyResult` (+ P1 `pmf` *(opt)*) | `VerdictResult` | Pure function of scores + caps; no LLM |
 | 7 | `report` | all prior outputs + `evidence[]` | `ValidationReport` | Assembles only; does not re-score |
 
-**Evidence attachment:** any module may append to a shared `evidence[]` accumulator during the run; `scorecard.demand_signals.*.evidence_ids` MUST reference ids already in that array at report time.
+**Evidence attachment:** any module may append to a shared `evidence[]` accumulator during the run.  
+`scorecard.demand_signals.*.evidence_ids` may reference ids that are **intended** to exist by report time.  
+**Existence refine (`evidence_ids` ⊆ `evidence[].id`) runs only when assembling / parsing `ValidationReport`** — not inside the `scorecard` module unit tests. Scorecard tests may use stub ids without a full evidence array.
 
 ### 12.1 `clarify` → `ClarifiedIdea`
 
@@ -464,7 +469,8 @@ For every `collision_hints[i]`, if `grade` is `L2` or `L3`, then `url` MUST be a
 
 Includes §3.2.1 fields: `demand_signals`, `signal_notes`, `dimensions`, `weights`, `composite`.
 
-**AC:** weights sum 1±1e-6; composite = Σ dim×weight ±0.5; Fluenta fold tests §3.2.1; every `evidence_ids` entry exists in report `evidence[].id`.
+**AC:** weights sum 1±1e-6; composite = Σ dim×weight ±0.5; Fluenta fold tests §3.2.1; no keys outside the 8 dims.  
+**Not required at scorecard unit level:** `evidence_ids` existence vs `evidence[]` (deferred to report refine, §12.0 / §12.6).
 
 ### 12.5 `verdict` → `VerdictResult`
 
@@ -472,11 +478,22 @@ Includes §3.2.1 fields: `demand_signals`, `signal_notes`, `dimensions`, `weight
 {
   verdict: "kill"|"pivot"|"test"|"build";
   rationale: string[];
-  caps_applied: string[];
+  caps_applied: CapId[];  // closed enum — see table
 }
 ```
 
-**AC (aligned with §3.3):** table-driven thresholds; novelty `veto` ⇒ `kill`; **if Differentiation &lt; 30 or Distribution &lt; 30 ⇒ verdict is at most `pivot`** (`caps_applied` includes `diff_or_dist_lt_30`).
+#### `caps_applied` enum (frozen names)
+
+| CapId | When applied | Effect |
+|---|---|---|
+| `novelty_veto` | `novelty.veto === true` | Force `kill` |
+| `diff_or_dist_lt_30` | Differentiation &lt; 30 or Distribution &lt; 30 | Cap to at most `pivot` |
+| `pmf_weak_cap` | P1+: `pmf.status === "weak"` and `pmf.caps_verdict` | Cap to at most `test` |
+| `build_gate_fail` | Composite would be `build` but Pain &lt; 50 or Buildability &lt; 50 | Cap to `test` (or lower if other caps apply) |
+
+Unknown strings in `caps_applied` fail Zod enum parse. P2+ may extend the enum only via spec revision + migration note.
+
+**AC (aligned with §3.3):** table-driven thresholds; novelty `veto` ⇒ `kill` + `novelty_veto`; **if Differentiation &lt; 30 or Distribution &lt; 30 ⇒ verdict is at most `pivot`** + `diff_or_dist_lt_30`.
 
 ### 12.6 `report` → `ValidationReport`
 
@@ -484,10 +501,13 @@ Includes §3.2.1 fields: `demand_signals`, `signal_notes`, `dimensions`, `weight
 
 | Rule | Spec |
 |---|---|
-| Format | `ev_<run_short>_<seq>` where `run_short` = first 8 chars of `run_id` (hex/uuid without dashes ok), `seq` = zero-padded 3-digit monotonic int starting `001` |
-| Example | `ev_a1b2c3d4_001` |
-| Stability | Within a single `run_id`, ids are assigned in append order and **never reused**; regenerating the same mock fixture yields the **same** ids |
-| References | `demand_signals.*.evidence_ids` ⊆ `evidence[].id`; dangling refs fail report schema refine |
+| `run_short` | Take `run_id`, keep only `[a-z0-9]` (strip `_`, `-`, etc.), then take the **first 8** chars. If fewer than 8 alnum chars, left-pad with `0`. |
+| Format | `ev_<run_short>_<seq>` with `seq` = zero-padded 3-digit monotonic int starting `001` |
+| Regex (locked) | `^ev_[a-z0-9]{8}_\d{3}$` |
+| Example (uuid run) | `run_id=a1b2c3d4-e5f6-...` → `run_short=a1b2c3d4` → `ev_a1b2c3d4_001` |
+| Example (mock run) | `run_id=mock_kill_a1b2c3d4e5f6` → alnum filter → `mockkilla1b2c3d4e5f6` → `run_short=mockkill` → `ev_mockkill_001` |
+| Stability | Within a single `run_id`, ids assigned in append order and **never reused**; same mock fixture ⇒ same ids |
+| References | `demand_signals.*.evidence_ids` ⊆ `evidence[].id` checked **only** on `ValidationReport` refine (not in scorecard module) |
 
 ```ts
 {
@@ -499,7 +519,7 @@ Includes §3.2.1 fields: `demand_signals`, `signal_notes`, `dimensions`, `weight
   scorecard: ScorecardResult;
   verdict: VerdictResult;
   evidence: {
-    id: string;             // matches ^ev_[a-z0-9]+_\d{3}$
+    id: string;             // ^ev_[a-z0-9]{8}_\d{3}$
     claim: string;
     grade: "L0"|"L1"|"L2"|"L3";
     url?: string;           // required if grade ∈ {L2,L3} (Zod refine)
@@ -525,27 +545,31 @@ type MonetizationLite = {
   model: "subscription"|"usage"|"one_time"|"freemium"|"marketplace"|"other";
   price_hypothesis: string;
   revenue_notes: string;
-  willingness_link: string;  // ties to Willingness dim rationale
+  willingness_link: string;
 };
 
 type PmfLite = {
   status: "strong"|"mixed"|"weak"|"unknown";
   signals: string[];
   gaps: string[];
-  caps_verdict: boolean;     // if true and status=weak → verdict capped to test
+  caps_verdict: boolean;
 };
 
-// P2
+// P2 — Zod must enforce .max on duration/budget when module ships
 type ExperimentCard = {
   name: string;
   type: "mom_test"|"fake_door"|"concierge"|"rat"|"other";
-  duration_days: number;     // ≤ 14 for default RAT pack
-  budget_usd: number;        // ≤ 100 for default pack
+  duration_days: number;     // Zod: .int().min(1).max(14)  — RAT pack default
+  budget_usd: number;        // Zod: .min(0).max(100)     — RAT pack default
   success_metric: string;
 };
+```
 
+**P2 schema lock (when `experiments` lands):** `duration_days ≤ 14` and `budget_usd ≤ 100` MUST be Zod `.max()` constraints (not comment-only), so the “≤2 weeks ≤$100” RAT promise is test-enforced. Cards outside that envelope use `type: "other"` **and** still fail default-pack validation unless an explicit `pack: "extended"` flag is added in a future spec revision.
+
+```ts
 type CanvasLite = {
-  lean: Record<string, string>;  // problem, solution, uv, channels, …
+  lean: Record<string, string>;
   jtbd: { job: string; situation: string; outcome: string };
   swot: { strengths: string[]; weaknesses: string[]; opportunities: string[]; threats: string[] };
 };
@@ -566,12 +590,12 @@ When `MOCK_LLM=1` (or `true`):
 
 1. **No** external LLM calls.  
 2. Engine selects one of **three fixed fixtures** by hashing normalized `idea_text` into buckets, **or** by explicit `?fixture=kill|test|build` / `X-Mock-Fixture` header in API tests.  
-3. Fixtures live at `packages/engine/fixtures/mock_{kill,test,build}.json` and **are** valid `ValidationReport` objects (including reserved keys as `null`).  
-4. `run_id` in mock mode is deterministic: `mock_<fixture>_<sha256(idea_text)[0:12]>`.  
-5. Evidence ids follow §12.6 rules with that `run_id`.  
-6. Golden tests assert **byte-stable** JSON for the three named fixtures (ignore wall-clock timestamps if any; P0 reports have **no** timestamp fields required).
+3. Fixtures live at `packages/engine/fixtures/mock_{kill,test,build}.json` and **are** valid `ValidationReport` objects (reserved keys `null`).  
+4. `run_id` in mock mode is deterministic and **may keep underscores for readability**: `mock_<fixture>_<sha256(idea_text)[0:12]>` (e.g. `mock_kill_a1b2c3d4e5f6`).  
+5. Evidence ids use **`run_short` = alnum-filter then 8 chars** (above), so mock ids stay `^ev_[a-z0-9]{8}_\d{3}$` (e.g. `ev_mockkill_001`).  
+6. Golden tests assert **byte-stable** JSON for the three named fixtures (P0 reports have **no** required wall-clock timestamp fields).
 
-**AC:** contract test `validate → report` shape; Web renders P0 sections; mock path yields stable golden verdicts kill/test/build; Zod rejects L2+ evidence without url; reserved keys present and `null` in P0.
+**AC:** contract test `validate → report` shape; Web renders P0 sections; mock path yields stable golden verdicts; Zod rejects L2+ without url; evidence id regex holds for mock `run_id`s; reserved keys present and `null` in P0; report refine catches dangling `evidence_ids`.
 
 ### 12.7 P0 done checklist
 
