@@ -17,10 +17,7 @@ Vibe coding 场景的 Idea 验证器：输入一句话产品想法，输出结�
 | Web 校验/报告页 | ⏳ 计划中 |
 | Supabase / 真实 LLM / MCP / Skill | ⏳ P1+ |
 
-设计与计划：
-
-- [设计 Spec](docs/superpowers/specs/2026-09-18-idea4ai-design.md)
-- [P0 实现计划](docs/superpowers/plans/2026-09-18-idea4ai-p0.md)
+设计与计划文档在本地 `docs/`、`.superpowers/`（已 gitignore，不上传）。
 
 ## 快速开始
 
