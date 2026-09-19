@@ -27,6 +27,7 @@ export function createMemoryStore(): IdeaStore {
       runs.set(run_id, { run_id, idea_id: ideaId, status: "running" });
       const completion = runPipeline(idea.text, {
         ideaId,
+        runId: run_id,
         mockFixture: fixture,
       })
         .then((report) => {

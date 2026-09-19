@@ -104,6 +104,7 @@ export function createSupabaseStore(
         try {
           const report = await runPipeline(idea.text, {
             ideaId,
+            runId: run_id,
             mockFixture: fixture,
           });
           const { error: reportErr } = await client.from("reports").upsert({

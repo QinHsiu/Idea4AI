@@ -26,9 +26,12 @@ import {
 import { pickFixture, type FixtureName } from "./mock/selectFixture";
 import { clarifyWithLlm, scorecardWithLlm } from "./llm/score";
 import { resolveLlmMode } from "./llm/provider";
+import { deterministicRunId } from "./runId";
 
 export interface PipelineOptions {
   ideaId?: string;
+  /** When set (e.g. by store), report.run_id and evidence ids bind to this run. */
+  runId?: string;
   mockFixture?: FixtureName;
 }
 
@@ -49,7 +52,7 @@ export async function runPipeline(
   }
 
   const ideaId = opts.ideaId ?? "idea_unknown";
-  const runId = `run_${Date.now().toString(36)}`;
+  const runId = opts.runId ?? deterministicRunId(ideaId, ideaText);
   const input = { idea_id: ideaId, idea_text: ideaText };
 
   const clarified =
