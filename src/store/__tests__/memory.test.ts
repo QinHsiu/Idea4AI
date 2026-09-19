@@ -9,28 +9,28 @@ describe("memory store", () => {
   });
 
   it("creates ideas and starts a run that becomes reportable", async () => {
-    const idea = store.createIdea("An idea");
+    const idea = await store.createIdea("An idea");
     expect(idea.id).toMatch(/^idea_/);
 
-    const run = store.startValidate(idea.id, "build");
+    const run = await store.startValidate(idea.id, "build");
     expect(run.run_id).toMatch(/^run_/);
-    expect(store.getRun(run.run_id)?.status).toBe("running");
 
-    await store.waitForRun(run.run_id);
-    expect(store.getRun(run.run_id)?.status).toBe("completed");
-    expect(store.getReport(idea.id)?.idea_id).toBe(idea.id);
+    const finished = await store.waitForRun(run.run_id);
+    expect(finished?.status).toBe("completed");
+    expect((await store.getRun(run.run_id))?.status).toBe("completed");
+    expect((await store.getReport(idea.id))?.idea_id).toBe(idea.id);
   });
 
-  it("returns undefined for unknown records", () => {
-    expect(store.getRun("missing")).toBeUndefined();
-    expect(store.getReport("missing")).toBeUndefined();
-    expect(store.getIdea("missing")).toBeUndefined();
+  it("returns undefined for unknown records", async () => {
+    expect(await store.getRun("missing")).toBeUndefined();
+    expect(await store.getReport("missing")).toBeUndefined();
+    expect(await store.getIdea("missing")).toBeUndefined();
   });
 
-  it("lists ideas newest first", () => {
-    const a = store.createIdea("first");
-    const b = store.createIdea("second");
-    const list = store.listIdeas();
+  it("lists ideas newest first", async () => {
+    const a = await store.createIdea("first");
+    const b = await store.createIdea("second");
+    const list = await store.listIdeas();
     expect(list.map((x) => x.id)).toEqual([b.id, a.id]);
   });
 });

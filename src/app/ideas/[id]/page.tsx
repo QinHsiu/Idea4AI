@@ -205,6 +205,13 @@ export default function IdeaReportPage() {
             <span>{report.novelty.require_rewrite ? "是" : "否"}</span>
           </div>
         </div>
+        {report.novelty.rewrite_suggestions.length > 0 ? (
+          <ol className="next-actions" style={{ marginTop: 12 }}>
+            {report.novelty.rewrite_suggestions.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ol>
+        ) : null}
         {report.novelty.collision_hints.length > 0 ? (
           <ul className="evidence" style={{ marginTop: 12 }}>
             {report.novelty.collision_hints.map((h, i) => (
@@ -244,6 +251,176 @@ export default function IdeaReportPage() {
           ))}
         </ul>
       </section>
+
+      {report.monetization ? (
+        <section className="card">
+          <h2 className="section-title">变现（lite）</h2>
+          <div className="kv">
+            <div>
+              <span className="k">模型</span>
+              <span>{report.monetization.model}</span>
+            </div>
+            <div>
+              <span className="k">价格假设</span>
+              <span>{report.monetization.price_hypothesis}</span>
+            </div>
+            <div>
+              <span className="k">说明</span>
+              <span>{report.monetization.revenue_notes}</span>
+            </div>
+            <div>
+              <span className="k">Willingness</span>
+              <span>{report.monetization.willingness_link}</span>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {report.pmf ? (
+        <section className="card">
+          <h2 className="section-title">PMF（lite）</h2>
+          <div className="kv">
+            <div>
+              <span className="k">状态</span>
+              <span>
+                {report.pmf.status}
+                {report.pmf.caps_verdict ? " · 触发 pmf_weak_cap" : ""}
+              </span>
+            </div>
+            <div>
+              <span className="k">信号</span>
+              <span>
+                {report.pmf.signals.length
+                  ? report.pmf.signals.join("；")
+                  : "—"}
+              </span>
+            </div>
+            <div>
+              <span className="k">缺口</span>
+              <span>
+                {report.pmf.gaps.length ? report.pmf.gaps.join("；") : "—"}
+              </span>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {report.research ? (
+        <section className="card">
+          <h2 className="section-title">深度研究（lite）</h2>
+          <p className="lead">{report.research.summary}</p>
+          <div className="kv">
+            <div>
+              <span className="k">置信度</span>
+              <span>
+                {report.research.confidence}% · {report.research.mode}
+              </span>
+            </div>
+          </div>
+          <ul className="evidence" style={{ marginTop: 12 }}>
+            {report.research.findings.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+          {report.research.sources.length > 0 ? (
+            <ul className="evidence" style={{ marginTop: 12 }}>
+              {report.research.sources.map((s) => (
+                <li key={`${s.source}-${s.title}`}>
+                  [{s.source ?? "src"}] {s.title}
+                  {s.url ? (
+                    <>
+                      {" "}
+                      <a href={s.url} target="_blank" rel="noreferrer">
+                        link
+                      </a>
+                    </>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+
+      {report.pitch ? (
+        <section className="card">
+          <h2 className="section-title">Pitch</h2>
+          <p>{report.pitch}</p>
+        </section>
+      ) : null}
+
+      {report.experiments && report.experiments.length > 0 ? (
+        <section className="card">
+          <h2 className="section-title">实验 / Test Cards</h2>
+          <ul className="evidence">
+            {report.experiments.map((ex) => (
+              <li key={`${ex.type}-${ex.name}`}>
+                <strong>
+                  [{ex.type}] {ex.name}
+                </strong>{" "}
+                · {ex.duration_days}d · ${ex.budget_usd}
+                <br />
+                <span className="muted">指标：{ex.success_metric}</span>
+                {ex.hypothesis ? (
+                  <>
+                    <br />
+                    <span className="muted">假设：{ex.hypothesis}</span>
+                  </>
+                ) : null}
+                {ex.method ? (
+                  <>
+                    <br />
+                    <span className="muted">方法：{ex.method}</span>
+                  </>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {report.canvas ? (
+        <section className="card">
+          <h2 className="section-title">Canvas（Lean / JTBD / SWOT）</h2>
+          <div className="kv">
+            <div>
+              <span className="k">UVP</span>
+              <span>{report.canvas.lean.unique_value_proposition}</span>
+            </div>
+            <div>
+              <span className="k">JTBD</span>
+              <span>{report.canvas.jtbd.job}</span>
+            </div>
+            <div>
+              <span className="k">SWOT 威胁</span>
+              <span>{report.canvas.swot.threats.join("；")}</span>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {report.pestle ? (
+        <section className="card">
+          <h2 className="section-title">PESTLE</h2>
+          <div className="kv">
+            {(
+              [
+                ["political", report.pestle.political],
+                ["economic", report.pestle.economic],
+                ["social", report.pestle.social],
+                ["technological", report.pestle.technological],
+                ["legal", report.pestle.legal],
+                ["environmental", report.pestle.environmental],
+              ] as const
+            ).map(([k, v]) => (
+              <div key={k}>
+                <span className="k">{k}</span>
+                <span>{v}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="card">
         <h2 className="section-title">下一步</h2>

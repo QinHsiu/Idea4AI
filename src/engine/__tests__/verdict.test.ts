@@ -72,6 +72,16 @@ describe("computeVerdict", () => {
       },
       expected: { verdict: "kill" as const, caps: [] },
     },
+    {
+      name: "composite 80 + pmfWeak → test + pmf_weak_cap",
+      input: {
+        dimensions: baseDims({ Pain: 60, Buildability: 60 }),
+        composite: 80,
+        noveltyVeto: false,
+        pmfWeak: true,
+      },
+      expected: { verdict: "test" as const, caps: ["pmf_weak_cap"] },
+    },
   ])("$name", ({ input, expected }) => {
     const result = computeVerdict(input);
     expect(result.verdict).toBe(expected.verdict);

@@ -120,9 +120,28 @@ export const noveltyResultSchema = z
     template_hit: z.boolean(),
     collision_hints: z.array(collisionHintSchema),
     require_rewrite: z.boolean(),
+    /** TweakIdea-style rewrite probes; 0 when not needed, else 1–3. */
+    rewrite_suggestions: z.array(z.string()).max(3),
   })
   .superRefine((data, ctx) => {
     refineL2L3Url(data.collision_hints, ctx, ["collision_hints"]);
+    if (
+      data.require_rewrite &&
+      data.rewrite_suggestions.length === 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "require_rewrite=true needs at least one rewrite_suggestion",
+        path: ["rewrite_suggestions"],
+      });
+    }
+    if (!data.require_rewrite && data.rewrite_suggestions.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "rewrite_suggestions must be empty when require_rewrite=false",
+        path: ["rewrite_suggestions"],
+      });
+    }
   });
 export type NoveltyResult = z.infer<typeof noveltyResultSchema>;
 
@@ -174,15 +193,19 @@ const pmfLiteSchema = z.object({
   caps_verdict: z.boolean(),
 });
 
-const experimentCardSchema = z.object({
+export const experimentCardSchema = z.object({
   name: z.string(),
   type: z.enum(["mom_test", "fake_door", "concierge", "rat", "other"]),
   duration_days: z.number().int().min(1).max(14),
   budget_usd: z.number().min(0).max(100),
   success_metric: z.string(),
+  /** Test Card subset */
+  hypothesis: z.string().optional(),
+  method: z.string().optional(),
 });
+export type ExperimentCard = z.infer<typeof experimentCardSchema>;
 
-const canvasLiteSchema = z.object({
+export const canvasLiteSchema = z.object({
   lean: z.record(z.string(), z.string()),
   jtbd: z.object({
     job: z.string(),
@@ -196,8 +219,9 @@ const canvasLiteSchema = z.object({
     threats: z.array(z.string()),
   }),
 });
+export type CanvasLite = z.infer<typeof canvasLiteSchema>;
 
-const pestleLiteSchema = z.object({
+export const pestleLiteSchema = z.object({
   political: z.string(),
   economic: z.string(),
   social: z.string(),
@@ -205,6 +229,24 @@ const pestleLiteSchema = z.object({
   legal: z.string(),
   environmental: z.string(),
 });
+export type PestleLite = z.infer<typeof pestleLiteSchema>;
+
+export const researchLiteSchema = z.object({
+  summary: z.string(),
+  findings: z.array(z.string()).max(5),
+  sources: z
+    .array(
+      z.object({
+        title: z.string(),
+        url: z.string().optional(),
+        source: z.string().optional(),
+      }),
+    )
+    .max(6),
+  confidence: z.number().min(0).max(100),
+  mode: z.enum(["heuristic", "llm"]),
+});
+export type ResearchLite = z.infer<typeof researchLiteSchema>;
 
 export const validationReportSchema = z
   .object({
@@ -224,6 +266,7 @@ export const validationReportSchema = z
     canvas: canvasLiteSchema.nullable(),
     pestle: pestleLiteSchema.nullable(),
     pitch: z.string().nullable(),
+    research: researchLiteSchema.nullable(),
   })
   .superRefine((data, ctx) => {
     refineL2L3Url(data.evidence, ctx, ["evidence"]);

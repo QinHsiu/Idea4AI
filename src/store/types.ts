@@ -17,12 +17,20 @@ export interface Run {
   report?: ValidationReport;
 }
 
-export interface MemoryStore {
-  createIdea(text: string): { id: string };
-  startValidate(ideaId: string, fixture?: FixtureName): { run_id: string };
-  getRun(runId: string): Run | undefined;
-  getReport(ideaId: string): ValidationReport | undefined;
-  listIdeas(): Idea[];
-  getLatestRun(ideaId: string): Run | undefined;
-  getIdea(ideaId: string): Idea | undefined;
+export type StoreBackend = "memory" | "supabase";
+
+/** Shared persistence contract for memory + Supabase backends. */
+export interface IdeaStore {
+  readonly backend: StoreBackend;
+  createIdea(text: string): Promise<{ id: string }>;
+  startValidate(ideaId: string, fixture?: FixtureName): Promise<{ run_id: string }>;
+  getRun(runId: string): Promise<Run | undefined>;
+  getReport(ideaId: string): Promise<ValidationReport | undefined>;
+  listIdeas(): Promise<Idea[]>;
+  getLatestRun(ideaId: string): Promise<Run | undefined>;
+  getIdea(ideaId: string): Promise<Idea | undefined>;
+  waitForRun(runId: string): Promise<Run | undefined>;
 }
+
+/** @deprecated Prefer IdeaStore — kept as alias for older imports. */
+export type MemoryStore = IdeaStore;

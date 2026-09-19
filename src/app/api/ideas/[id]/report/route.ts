@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { memoryStore } from "@/store/memory";
+import { getStore } from "@/store";
 
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const store = getStore();
   const { id } = await context.params;
-  const report = memoryStore.getReport(id);
+  const report = await store.getReport(id);
   if (!report) {
     return NextResponse.json({ error: "Report not found" }, { status: 404 });
   }

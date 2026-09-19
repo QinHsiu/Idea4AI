@@ -23,7 +23,8 @@
     "veto": false,
     "template_hit": false,
     "collision_hints": [],
-    "require_rewrite": false
+    "require_rewrite": false,
+    "rewrite_suggestions": []
   },
   "scorecard": {
     "demand_signals": {
@@ -74,10 +75,95 @@
   ],
   "next_actions": ["Define the smallest shippable MVP.", "Build and instrument the core workflow.", "Launch to the target audience and review retention."],
   "pipeline_version": "p0.1.0",
-  "monetization": null,
-  "pmf": null,
-  "experiments": null,
-  "canvas": null,
-  "pestle": null,
-  "pitch": null
+  "monetization": {
+    "model": "subscription",
+    "price_hypothesis": "$19–$49/mo per founder seat",
+    "revenue_notes": "Primary buyer: indie founders shipping vibe-coded MVPs. Monetize the focused validation workflow around pain: wasting weeks building unvalidated products.",
+    "willingness_link": "Willingness score 82/100 → credible paid probe."
+  },
+  "pmf": {
+    "status": "strong",
+    "signals": [
+      "Pain 82 suggests a felt problem",
+      "Willingness 82 supports a paid probe",
+      "Distribution 82 shows a reachable channel",
+      "No novelty veto on this run"
+    ],
+    "gaps": [],
+    "caps_verdict": false
+  },
+  "experiments": [
+    {
+      "name": "Concierge MVP",
+      "type": "concierge",
+      "duration_days": 14,
+      "budget_usd": 80,
+      "success_metric": "Deliver value manually to ≥3 users; ≥2 would pay again",
+      "hypothesis": "validation report creates enough value that indie founders retain after a manual run",
+      "method": "Manually run the workflow for 3 indie founders; log time-to-value and objections"
+    },
+    {
+      "name": "Fake-door / smoke landing",
+      "type": "fake_door",
+      "duration_days": 7,
+      "budget_usd": 40,
+      "success_metric": "≥5% CTR to waitlist or ≥10 qualified signups",
+      "hypothesis": "indie founders will click/sign up for a solution to uncertain idea demand",
+      "method": "One landing page + CTA; drive a small paid or community traffic burst; no full product"
+    },
+    {
+      "name": "Riskiest Assumption Test",
+      "type": "rat",
+      "duration_days": 14,
+      "budget_usd": 50,
+      "success_metric": "Riskiest assumption falsified or supported with ≥1 concrete evidence artifact",
+      "hypothesis": "Users will pay for validation report within 14 days of a credible promise",
+      "method": "Write the single riskiest assumption, design the cheapest test ≤$100 / ≤2 weeks, run it, record evidence grade"
+    }
+  ],
+  "canvas": {
+    "lean": {
+      "problem": "uncertain idea demand",
+      "customer_segments": "indie founders",
+      "unique_value_proposition": "Validate startup ideas before building",
+      "solution": "validation report",
+      "channels": "evaluating a new product idea",
+      "revenue_streams": "subscription: $19–$49/mo per founder seat",
+      "cost_structure": "Primarily build + distribution experiments (≤$100 probes)",
+      "key_metrics": "Composite 82; verdict build",
+      "unfair_advantage": "Founder-market fit signal present — deepen it"
+    },
+    "jtbd": {
+      "job": "When I am evaluating a new product idea, I want to address uncertain idea demand",
+      "situation": "evaluating a new product idea",
+      "outcome": "So I can move forward with validation report confidently"
+    },
+    "swot": {
+      "strengths": ["Pain score 82", "Buildability 82"],
+      "weaknesses": ["Evidence mostly L0/L1 until experiments run"],
+      "opportunities": ["AI makes prototyping fast", "Reachable audience: high"],
+      "threats": ["Incumbents can copy a thin wedge quickly"]
+    }
+  },
+  "pestle": {
+    "political": "Export controls and AI policy can change model access/cost; keep vendor flexibility.",
+    "economic": "Willingness 82/100 — price probes must stay cheap; verdict build implies invest carefully in MVP.",
+    "social": "indie founders adopt tools via communities and peer proof; trust > hype for uncertain idea demand.",
+    "technological": "Feasible with current LLM/tooling (Buildability 82).",
+    "legal": "Respect user data, scraped evidence licenses, and marketplace ToS if integrating third-party APIs.",
+    "environmental": "Model inference has energy cost — prefer smaller models / caching for validation loops."
+  },
+  "pitch": "Validate startup ideas before building — for indie founders. Why now: AI makes prototyping fast. Verdict: build (research confidence 61%).",
+  "research": {
+    "summary": "Research snapshot for “Validate startup ideas before building”. Signals lean build; validate willingness and distribution next.",
+    "findings": [
+      "Audience: indie founders (high) — evaluating a new product idea",
+      "Scorecard composite 82; Pain 82, Differentiation 82",
+      "No public collision hints on this run — treat novelty as provisional",
+      "Current verdict build"
+    ],
+    "sources": [],
+    "confidence": 61,
+    "mode": "heuristic"
+  }
 }

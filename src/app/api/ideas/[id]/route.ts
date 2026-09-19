@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
-import { memoryStore } from "@/store/memory";
+import { getStore } from "@/store";
 
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const store = getStore();
   const { id } = await context.params;
-  const idea = memoryStore.getIdea(id);
+  const idea = await store.getIdea(id);
   if (!idea) {
     return NextResponse.json({ error: "Idea not found" }, { status: 404 });
   }
-  const run = memoryStore.getLatestRun(id);
+  const run = await store.getLatestRun(id);
   return NextResponse.json({
     idea,
     run: run
@@ -23,5 +24,6 @@ export async function GET(
         }
       : null,
     report: run?.status === "completed" ? run.report ?? null : null,
+    backend: store.backend,
   });
 }

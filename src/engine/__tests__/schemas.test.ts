@@ -83,6 +83,7 @@ describe("noveltyResultSchema", () => {
         { source: "web", title: "Similar tool", grade: "L2" },
       ],
       require_rewrite: false,
+      rewrite_suggestions: [],
     });
     expect(result.success).toBe(false);
   });
@@ -100,8 +101,28 @@ describe("noveltyResultSchema", () => {
         },
       ],
       require_rewrite: false,
+      rewrite_suggestions: [],
     });
     expect(result.success).toBe(true);
+  });
+
+  it("requires suggestions when require_rewrite", () => {
+    const bad = noveltyResultSchema.safeParse({
+      veto: true,
+      template_hit: true,
+      collision_hints: [],
+      require_rewrite: true,
+      rewrite_suggestions: [],
+    });
+    expect(bad.success).toBe(false);
+    const good = noveltyResultSchema.safeParse({
+      veto: true,
+      template_hit: true,
+      collision_hints: [],
+      require_rewrite: true,
+      rewrite_suggestions: ["Narrow the who and pain."],
+    });
+    expect(good.success).toBe(true);
   });
 });
 
@@ -129,6 +150,7 @@ describe("validationReportSchema", () => {
       template_hit: false,
       collision_hints: [],
       require_rewrite: false,
+      rewrite_suggestions: [],
     },
     scorecard: baseScorecard,
     verdict: {
@@ -145,6 +167,7 @@ describe("validationReportSchema", () => {
     canvas: null,
     pestle: null,
     pitch: null,
+    research: null,
   };
 
   it("rejects dangling evidence_ids in demand_signals", () => {

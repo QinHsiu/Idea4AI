@@ -6,6 +6,7 @@ import {
 } from "./schemas";
 import type { EvidenceAccumulator } from "./evidence";
 import type { IdeaInput } from "./clarify";
+import { rewriteSuggestions } from "./rewrite";
 
 export function novelty(
   input: IdeaInput,
@@ -26,9 +27,14 @@ export function novelty(
   }
   return noveltyResultSchema.parse({
     veto: templateHit,
-    reason: templateHit ? "The idea needs a narrower user, pain, or wedge." : undefined,
+    reason: templateHit
+      ? "The idea needs a narrower user, pain, or wedge."
+      : undefined,
     template_hit: templateHit,
     collision_hints: [],
     require_rewrite: templateHit,
+    rewrite_suggestions: templateHit
+      ? rewriteSuggestions(input.idea_text, clarified, audienceProfile)
+      : [],
   });
 }

@@ -20,7 +20,7 @@ create table if not exists reports (
   idea_id text primary key references ideas(id) on delete cascade,
   run_id text not null references runs(id) on delete cascade,
   -- Full ValidationReport JSON (must include monetization, pmf, experiments,
-  -- canvas, pestle, pitch — null in P0)
+  -- canvas, pestle, pitch, research — null allowed for deferred modules)
   payload jsonb not null,
   created_at timestamptz not null default now(),
   constraint reports_reserved_keys check (
@@ -30,5 +30,6 @@ create table if not exists reports (
     and payload ? 'canvas'
     and payload ? 'pestle'
     and payload ? 'pitch'
+    and payload ? 'research'
   )
 );

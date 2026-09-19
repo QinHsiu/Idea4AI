@@ -14,6 +14,7 @@ type IdeaRow = {
 
 export default function IdeasPage() {
   const [ideas, setIdeas] = useState<IdeaRow[]>([]);
+  const [backend, setBackend] = useState<string>("memory");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -22,6 +23,7 @@ export default function IdeasPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "load failed");
         setIdeas(data.ideas ?? []);
+        setBackend(data.backend ?? "memory");
       })
       .catch((err) => setError(err instanceof Error ? err.message : String(err)));
   }, []);
@@ -30,7 +32,11 @@ export default function IdeasPage() {
     <main className="stack">
       <section className="card">
         <h1>历史 Idea</h1>
-        <p className="lead">进程内内存存储，重启后清空。</p>
+        <p className="lead">
+          {backend === "supabase"
+            ? "数据持久化在 Supabase。"
+            : "当前为进程内内存存储，重启后清空。配置 Supabase 后自动切换。"}
+        </p>
         {error ? <p className="error">{error}</p> : null}
         {ideas.length === 0 && !error ? (
           <p className="muted">

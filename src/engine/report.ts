@@ -19,6 +19,13 @@ export interface AssembleReportInput {
   evidence: ValidationReport["evidence"];
   next_actions?: string[];
   pipeline_version?: string;
+  monetization?: ValidationReport["monetization"];
+  pmf?: ValidationReport["pmf"];
+  experiments?: ValidationReport["experiments"];
+  canvas?: ValidationReport["canvas"];
+  pestle?: ValidationReport["pestle"];
+  pitch?: ValidationReport["pitch"];
+  research?: ValidationReport["research"];
 }
 
 export function assembleReport(input: AssembleReportInput): ValidationReport {
@@ -30,11 +37,12 @@ export function assembleReport(input: AssembleReportInput): ValidationReport {
       "Re-run the validator with the results.",
     ],
     pipeline_version: input.pipeline_version ?? "p0.1.0",
-    monetization: null,
-    pmf: null,
-    experiments: null,
-    canvas: null,
-    pestle: null,
-    pitch: null,
+    monetization: input.monetization ?? null,
+    pmf: input.pmf ?? null,
+    experiments: input.experiments ?? null,
+    canvas: input.canvas ?? null,
+    pestle: input.pestle ?? null,
+    pitch: input.pitch ?? null,
+    research: input.research ?? null,
   });
 }

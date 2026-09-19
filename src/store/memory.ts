@@ -1,25 +1,25 @@
 import { runPipeline } from "@/engine/pipeline";
 import type { FixtureName } from "@/engine/mock/selectFixture";
-import type { Idea, MemoryStore, Run } from "./types";
+import type { Idea, IdeaStore, Run } from "./types";
 
 const ids = (prefix: string) =>
   `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
-export function createMemoryStore(): MemoryStore & {
-  waitForRun(runId: string): Promise<Run | undefined>;
-} {
+export function createMemoryStore(): IdeaStore {
   const ideas = new Map<string, Idea>();
   const runs = new Map<string, Run>();
   const completions = new Map<string, Promise<Run | undefined>>();
 
-  const store = {
-    createIdea(text: string) {
+  const store: IdeaStore = {
+    backend: "memory",
+
+    async createIdea(text: string) {
       const id = ids("idea");
       ideas.set(id, { id, text, created_at: new Date().toISOString() });
       return { id };
     },
 
-    startValidate(ideaId: string, fixture?: FixtureName) {
+    async startValidate(ideaId: string, fixture?: FixtureName) {
       const idea = ideas.get(ideaId);
       if (!idea) throw new Error("Idea not found");
 
@@ -48,30 +48,30 @@ export function createMemoryStore(): MemoryStore & {
       return { run_id };
     },
 
-    getRun(runId: string) {
+    async getRun(runId: string) {
       return runs.get(runId);
     },
 
-    getReport(ideaId: string) {
+    async getReport(ideaId: string) {
       return [...runs.values()]
         .reverse()
         .find((run) => run.idea_id === ideaId && run.status === "completed")
         ?.report;
     },
 
-    listIdeas() {
+    async listIdeas() {
       return [...ideas.values()].sort((a, b) =>
         a.created_at < b.created_at ? 1 : -1,
       );
     },
 
-    getLatestRun(ideaId: string) {
+    async getLatestRun(ideaId: string) {
       return [...runs.values()]
         .reverse()
         .find((run) => run.idea_id === ideaId);
     },
 
-    getIdea(ideaId: string) {
+    async getIdea(ideaId: string) {
       return ideas.get(ideaId);
     },
 
@@ -84,7 +84,7 @@ export function createMemoryStore(): MemoryStore & {
 }
 
 const globalForStore = globalThis as typeof globalThis & {
-  __idea4aiMemoryStore?: ReturnType<typeof createMemoryStore>;
+  __idea4aiMemoryStore?: IdeaStore;
 };
 
 /** Survive Next.js route recompiles in dev (otherwise Map resets between /api/ideas and /validate). */

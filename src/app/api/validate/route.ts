@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { memoryStore } from "@/store/memory";
+import { getStore } from "@/store";
 import type { FixtureName } from "@/engine/mock/selectFixture";
 
 const fixtures = new Set<FixtureName>(["kill", "test", "build"]);
@@ -38,13 +38,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const { id } = memoryStore.createIdea(text);
-  const { run_id } = memoryStore.startValidate(
+  const store = getStore();
+  const { id } = await store.createIdea(text);
+  const { run_id } = await store.startValidate(
     id,
     fixtureRaw as FixtureName | undefined,
   );
-  await memoryStore.waitForRun(run_id);
-  const run = memoryStore.getRun(run_id);
+  await store.waitForRun(run_id);
+  const run = await store.getRun(run_id);
   if (!run || run.status === "failed") {
     return NextResponse.json(
       { error: run?.error ?? "Validate failed", idea_id: id, run_id },
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
       run_id,
       status: run.status,
       report: run.report ?? null,
+      backend: store.backend,
     },
     { status: 200 },
   );

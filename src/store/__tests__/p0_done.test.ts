@@ -40,16 +40,16 @@ describe("P0 web path: create → validate → report", () => {
   it.each(["kill", "test", "build"] as const)(
     "fixture=%s yields readable report with matching verdict",
     async (fixture) => {
-      const { id } = store.createIdea(`golden idea for ${fixture}`);
-      const { run_id } = store.startValidate(id, fixture);
+      const { id } = await store.createIdea(`golden idea for ${fixture}`);
+      const { run_id } = await store.startValidate(id, fixture);
       const run = await store.waitForRun(run_id);
       expect(run?.status).toBe("completed");
-      const report = store.getReport(id);
+      const report = await store.getReport(id);
       expect(report).toBeDefined();
       const parsed = validationReportSchema.parse(report);
       expect(parsed.verdict.verdict).toBe(fixture);
       expect(parsed.next_actions).toHaveLength(3);
-      expect(store.getIdea(id)?.text).toContain(fixture);
+      expect((await store.getIdea(id))?.text).toContain(fixture);
     },
   );
 });

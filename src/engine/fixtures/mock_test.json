@@ -23,7 +23,8 @@
     "veto": false,
     "template_hit": false,
     "collision_hints": [],
-    "require_rewrite": false
+    "require_rewrite": false,
+    "rewrite_suggestions": []
   },
   "scorecard": {
     "demand_signals": {
@@ -74,10 +75,95 @@
   ],
   "next_actions": ["Interview five target users.", "Launch a small fake-door test.", "Measure the agreed success metric."],
   "pipeline_version": "p0.1.0",
-  "monetization": null,
-  "pmf": null,
-  "experiments": null,
-  "canvas": null,
-  "pestle": null,
-  "pitch": null
+  "monetization": {
+    "model": "subscription",
+    "price_hypothesis": "$9–$19/mo early-bird seat",
+    "revenue_notes": "Primary buyer: indie founders. Monetize the validation report around pain: uncertain idea demand.",
+    "willingness_link": "Willingness score 68/100 → credible paid probe."
+  },
+  "pmf": {
+    "status": "mixed",
+    "signals": [
+      "Pain 68 suggests a felt problem",
+      "Willingness 68 supports a paid probe",
+      "Distribution 68 shows a reachable channel",
+      "No novelty veto on this run"
+    ],
+    "gaps": [],
+    "caps_verdict": false
+  },
+  "experiments": [
+    {
+      "name": "Mom Test interviews",
+      "type": "mom_test",
+      "duration_days": 7,
+      "budget_usd": 0,
+      "success_metric": "≥5 indie founders describe uncertain idea demand in their own words without prompting the solution",
+      "hypothesis": "indie founders currently feel uncertain idea demand at least weekly",
+      "method": "Interview 5–8 indie founders; ask about last time the pain happened, workarounds, and willingness to pay — never pitch the idea first"
+    },
+    {
+      "name": "Fake-door / smoke landing",
+      "type": "fake_door",
+      "duration_days": 7,
+      "budget_usd": 40,
+      "success_metric": "≥5% CTR to waitlist or ≥10 qualified signups",
+      "hypothesis": "indie founders will click/sign up for a solution to uncertain idea demand",
+      "method": "One landing page + CTA; drive a small paid or community traffic burst; no full product"
+    },
+    {
+      "name": "Riskiest Assumption Test",
+      "type": "rat",
+      "duration_days": 14,
+      "budget_usd": 50,
+      "success_metric": "Riskiest assumption falsified or supported with ≥1 concrete evidence artifact",
+      "hypothesis": "Users will pay for validation report within 14 days of a credible promise",
+      "method": "Write the single riskiest assumption, design the cheapest test ≤$100 / ≤2 weeks, run it, record evidence grade"
+    }
+  ],
+  "canvas": {
+    "lean": {
+      "problem": "uncertain idea demand",
+      "customer_segments": "indie founders",
+      "unique_value_proposition": "Validate startup ideas before building",
+      "solution": "validation report",
+      "channels": "evaluating a new product idea",
+      "revenue_streams": "subscription: $9–$19/mo early-bird seat",
+      "cost_structure": "Primarily build + distribution experiments (≤$100 probes)",
+      "key_metrics": "Composite 68; verdict test",
+      "unfair_advantage": "Founder-market fit signal present — deepen it"
+    },
+    "jtbd": {
+      "job": "When I am evaluating a new product idea, I want to address uncertain idea demand",
+      "situation": "evaluating a new product idea",
+      "outcome": "So I can move forward with validation report confidently"
+    },
+    "swot": {
+      "strengths": ["Pain score 68", "Buildability 68"],
+      "weaknesses": ["Evidence mostly L0/L1 until experiments run"],
+      "opportunities": ["AI makes prototyping fast", "Reachable audience: high"],
+      "threats": ["Incumbents can copy a thin wedge quickly"]
+    }
+  },
+  "pestle": {
+    "political": "Export controls and AI policy can change model access/cost; keep vendor flexibility.",
+    "economic": "Willingness 68/100 — price probes must stay cheap; verdict test implies minimize burn until evidence.",
+    "social": "indie founders adopt tools via communities and peer proof; trust > hype for uncertain idea demand.",
+    "technological": "Feasible with current LLM/tooling (Buildability 68).",
+    "legal": "Respect user data, scraped evidence licenses, and marketplace ToS if integrating third-party APIs.",
+    "environmental": "Model inference has energy cost — prefer smaller models / caching for validation loops."
+  },
+  "pitch": "Validate startup ideas before building — for indie founders. Why now: AI makes prototyping fast. Verdict: test (research confidence 54%).",
+  "research": {
+    "summary": "Research snapshot for “Validate startup ideas before building”. Signals lean test; validate willingness and distribution next.",
+    "findings": [
+      "Audience: indie founders (high) — evaluating a new product idea",
+      "Scorecard composite 68; Pain 68, Differentiation 68",
+      "No public collision hints on this run — treat novelty as provisional",
+      "Current verdict test"
+    ],
+    "sources": [],
+    "confidence": 54,
+    "mode": "heuristic"
+  }
 }

@@ -20,12 +20,16 @@ describe("MOCK_LLM fixtures", () => {
       expect(parsed.pipeline_version).toBe("p0.1.0");
       expect(parsed.next_actions).toHaveLength(3);
       expect(parsed.verdict.verdict).toBe(expectedVerdict);
-      expect(parsed.monetization).toBeNull();
-      expect(parsed.pmf).toBeNull();
-      expect(parsed.experiments).toBeNull();
-      expect(parsed.canvas).toBeNull();
-      expect(parsed.pestle).toBeNull();
-      expect(parsed.pitch).toBeNull();
+      expect(parsed.monetization).not.toBeNull();
+      expect(parsed.pmf).not.toBeNull();
+      expect(parsed.pmf?.status).toBeTruthy();
+      expect(parsed.experiments).not.toBeNull();
+      expect(parsed.experiments?.length).toBeGreaterThanOrEqual(3);
+      expect(parsed.canvas).not.toBeNull();
+      expect(parsed.pestle).not.toBeNull();
+      expect(parsed.pitch).toBeTruthy();
+      expect(parsed.research).not.toBeNull();
+      expect(parsed.research?.mode).toBe("heuristic");
       expect(
         parsed.evidence.every((item) =>
           item.id.startsWith(`ev_${runShort(parsed.run_id)}_`),
